@@ -56,6 +56,7 @@ void saveNodes() {
 }
 
 void getDegSeq() {
+    std::unordered_set<int> nodes;
     ioutils::TSVParser ss{FLAGS_graph};
     if (FLAGS_dir) {
         unordered_map<int, int> id_seq, od_seq;
@@ -63,6 +64,12 @@ void getDegSeq() {
             int src = ss.get<int>(0), dst = ss.get<int>(1);
             od_seq[src]++;
             id_seq[dst]++;
+            nodes.insert(src);
+            nodes.insert(dst);
+        }
+        for (int v : nodes) {
+            if (od_seq.find(v) == od_seq.end()) od_seq[v] = 0;
+            if (id_seq.find(v) == id_seq.end()) id_seq[v] = 0;
         }
         ioutils::saveMap(id_seq, strutils::insertMiddle(FLAGS_graph, "idseq"));
         ioutils::saveMap(od_seq, strutils::insertMiddle(FLAGS_graph, "odseq"));
