@@ -11,22 +11,28 @@ DEFINE_int32(type, 0,
              "2: binary\n");
 DEFINE_string(format, "",
               "format the graph: (not load into RAM)\n"
-              "e: convert to binary edgelist\n"
               "m: re-mapping graph nodes (node id starts from 0)\n"
               "n: get all nodes\n"
               "d: get degree sequence\n");
 DEFINE_string(calcs, "",
-              "What statistics to calculate: (will load into RAM)\n"
+              "statistics to calculate: (will load in RAM)\n"
               "b: basic statistics\n"
               "t: count closed triads\n"
               "D: BFS diameter (-testnodes:100)\n"
               "h: hops (10% effective diameter)\n"
               "w: largest weakly connected components\n"
               "s: largest strongly connected components\n");
+DEFINE_string(convert, "",
+              "conver graph to:\n"
+              "e: binary edgelist (not load in RAM)\n"
+              "b: binary (load in RAM)\n");
+DEFINE_string(ext, "",
+              "specify output file format, e.g., lz, gzip, txt.\n"
+              "if left empty, then does not change.\n");
 
 void mappingNodes() {
     printf("re-mapping graph nodes.\nassume the input is a text edgelist.\n");
-    string out_fnm = strutils::insertMiddle(FLAGS_graph, "mapped");
+    string out_fnm = strutils::insertMiddle(FLAGS_graph, "mapped", FLAGS_ext);
     auto po = ioutils::getIOOut(out_fnm);
     int id = 0;
     unordered_map<string, int> nidmap;
@@ -84,11 +90,43 @@ void getDegSeq() {
     }
 }
 
+void saveBinaryEdgelist() {
+    string out_fnm = strutils::insertMiddle(FLAGS_graph, "be", FLAGS_ext);
+    auto po = ioutils::getIOOut(out_fnm);
+    ioutils::TSVParser ss(FLAGS_graph);
+    while (ss.next()) {
+        int src = ss.get<int>(0), dst = ss.get<int>(1);
+        po->save(src);
+        po->save(dst);
+    }
+    printf("binary edgelist saved to %s\n", out_fnm.c_str());
+}
+
 template <class Graph>
 void calcs(const Graph& graph) {
     if (FLAGS_calcs.find('b') != string::npos) {
         printf("nodes:%d edges:%d\n", graph.getNodes(), graph.getEdges());
     }
+}
+
+template <class Graph>
+void saveBinary(const Graph& graph) {
+    string out_fnm = strutils::insertMiddle(FLAGS_graph, "bin", FLAGS_ext);
+    graph.save(out_fnm);
+    printf("binary graph saved to %s\n", out_fnm.c_str());
+}
+
+template <class Graph>
+void proc(const Graph& graph) {
+    if (FLAGS_dir)
+        printf("Directed ");
+    else
+        printf("Undirected ");
+    printf("graph loaded. Nodes:%d, Edges:%d\n\n", graph.getNodes(),
+           graph.getEdges());
+    if (!FLAGS_calcs.empty()) calcs(graph);
+    if (!FLAGS_convert.empty() && FLAGS_convert.find('b') != string::npos)
+        saveBinary(graph);
 }
 
 int main(int argc, char* argv[]) {
@@ -103,8 +141,12 @@ int main(int argc, char* argv[]) {
         if (FLAGS_format.find('n') != string::npos) saveNodes();
         // degree sequence
         if (FLAGS_format.find('d') != string::npos) getDegSeq();
+        return 0;
+    }
+
+    if (!FLAGS_convert.empty() && FLAGS_convert.find('e') != string::npos) {
         // save binary edgelist
-        // if (FLAGS_format.find('e') != string::npos) saveBinaryEdgelist();
+        saveBinaryEdgelist();
         return 0;
     }
 
@@ -123,9 +165,7 @@ int main(int argc, char* argv[]) {
             default:
                 break;
         }
-        printf("Directed graph loaded. Nodes:%d, Edges:%d\n\n",
-               graph.getNodes(), graph.getEdges());
-        if (!FLAGS_calcs.empty()) calcs(graph);
+        proc(graph);
     } else {
         graph::UGraph graph;
         switch (FLAGS_type) {
@@ -143,7 +183,7 @@ int main(int argc, char* argv[]) {
         }
         printf("Undirected graph loaded. Nodes:%d, Edges:%d\n\n",
                graph.getNodes(), graph.getEdges());
-        if (!FLAGS_calcs.empty()) calcs(graph);
+        proc(graph);
     }
 
     printf("\ncost time %s\n", tm.getStr().c_str());
