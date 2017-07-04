@@ -25,7 +25,7 @@ set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 # set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/build)
 set(EXECUTABLE_OUTPUT_PATH "~/bin")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/build)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "~/git_project/misc/cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} $ENV{GIT_REPO}/misc/cmake)
 message(STATUS "CMAKE_MODULE_PATH: " ${CMAKE_MODULE_PATH})
 
 # required libraries from system
