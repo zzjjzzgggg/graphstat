@@ -130,7 +130,7 @@ void proc(const Graph& graph) {
 }
 
 int main(int argc, char* argv[]) {
-    gflags::SetUsageMessage("usage:");
+    gflags::SetUsageMessage("{} {}"_format(__DATE__, __TIME__));
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     osutils::Timer tm;
 
