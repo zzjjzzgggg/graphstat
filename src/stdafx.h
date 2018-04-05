@@ -22,9 +22,7 @@
 #include <io/ioutils.h>
 #include <os/osutils.h>
 
-using std::vector;
-using std::string;
-using std::unordered_map;
+#include "global_variables.h"
 
 using namespace fmt::literals;
 using namespace graph;
