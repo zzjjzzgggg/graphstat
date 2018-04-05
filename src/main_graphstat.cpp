@@ -20,8 +20,8 @@ DEFINE_string(calcs, "",
               "t: count closed triads\n"
               "D: BFS diameter (-testnodes:100)\n"
               "h: hops (10% effective diameter)\n"
-              "w: largest weakly connected components\n"
-              "s: largest strongly connected components\n");
+              "W: weakly connected components\n"
+              "S: strongly connected components\n");
 DEFINE_string(convert, "",
               "conver graph to:\n"
               "e: binary edgelist (not load in RAM)\n"
@@ -103,9 +103,37 @@ void saveBinaryEdgelist() {
 }
 
 template <class Graph>
+void SCCAnalysis(const Graph& graph) {
+    printf("Strongly Connected Components Analysis:\n\n");
+
+    double nodes = graph.getNodes();
+
+    SCCVisitor dfs(graph);
+    dfs.performDFS();
+
+    std::unordered_map<int, int> cc_sz;
+    for (auto& pr : dfs.getCNEdges()) cc_sz[pr.first]++;
+
+    std::vector<int> sz_vec;
+    for (auto& pr : cc_sz) sz_vec.push_back(pr.second);
+
+    std::sort(sz_vec.begin(), sz_vec.end(), std::greater<int>());
+
+    int sz = sz_vec.size();
+    printf("Totally found %d strongly connected componets.\n", sz);
+    int k = std::min(10, sz);
+    printf("Sizes of top %d largest SCC are:\n", k);
+    for (int i = 0; i < k; i++)
+        printf("\t%d\t\t%.2f%%\n", sz_vec[i], sz_vec[i] / nodes * 100);
+}
+
+template <class Graph>
 void calcs(const Graph& graph) {
     if (FLAGS_calcs.find('b') != string::npos) {
         printf("nodes:%d edges:%d\n", graph.getNodes(), graph.getEdges());
+    }
+    if (FLAGS_calcs.find('S') != string::npos) {
+        if (FLAGS_dir) SCCAnalysis(graph);
     }
 }
 
@@ -124,6 +152,7 @@ void proc(const Graph& graph) {
         printf("Undirected ");
     printf("graph loaded. Nodes:%d, Edges:%d\n\n", graph.getNodes(),
            graph.getEdges());
+
     if (!FLAGS_calcs.empty()) calcs(graph);
     if (!FLAGS_convert.empty() && FLAGS_convert.find('b') != string::npos)
         saveBinary(graph);
@@ -151,32 +180,32 @@ int main(int argc, char* argv[]) {
     }
 
     if (FLAGS_dir) {
-        graph::DGraph graph;
+        dir::DGraph graph;
         switch (FLAGS_type) {
             case 0:
-                graph = graph::loadEdgeList<graph::DGraph>(FLAGS_graph);
+                graph = loadEdgeList<dir::DGraph>(FLAGS_graph);
                 break;
             case 1:
-                graph = graph::loadBinEdgeList<graph::DGraph>(FLAGS_graph);
+                graph = loadBinEdgeList<dir::DGraph>(FLAGS_graph);
                 break;
             case 2:
-                graph = graph::loadBinary<graph::DGraph>(FLAGS_graph);
+                graph = loadBinary<dir::DGraph>(FLAGS_graph);
                 break;
             default:
                 break;
         }
         proc(graph);
     } else {
-        graph::UGraph graph;
+        undir::UGraph graph;
         switch (FLAGS_type) {
             case 0:
-                graph = graph::loadEdgeList<graph::UGraph>(FLAGS_graph);
+                graph = loadEdgeList<undir::UGraph>(FLAGS_graph);
                 break;
             case 1:
-                graph = graph::loadBinEdgeList<graph::UGraph>(FLAGS_graph);
+                graph = loadBinEdgeList<undir::UGraph>(FLAGS_graph);
                 break;
             case 2:
-                graph = graph::loadBinary<graph::UGraph>(FLAGS_graph);
+                graph = loadBinary<undir::UGraph>(FLAGS_graph);
                 break;
             default:
                 break;
