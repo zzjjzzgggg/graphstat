@@ -69,8 +69,6 @@ int main(int argc, char* argv[]) {
             default:
                 break;
         }
-        printf("Undirected graph loaded. Nodes:%d, Edges:%d\n\n",
-               graph.getNodes(), graph.getEdges());
         proc(graph);
     }
 
